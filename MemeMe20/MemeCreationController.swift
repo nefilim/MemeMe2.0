@@ -8,7 +8,7 @@
 
 import UIKit
 
-class ImagePickerController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITextFieldDelegate {
+class MemeCreationController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITextFieldDelegate {
 
     @IBOutlet weak var imagePickerView: UIImageView!
     @IBOutlet weak var cameraButton: UIBarButtonItem!
@@ -44,7 +44,6 @@ class ImagePickerController: UIViewController, UIImagePickerControllerDelegate, 
         
         super.viewWillAppear(animated)
         subscribeToKeyboardNotifications()
-        cameraButton.isEnabled = UIImagePickerController.isSourceTypeAvailable(.camera)
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -55,13 +54,10 @@ class ImagePickerController: UIViewController, UIImagePickerControllerDelegate, 
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
-        topTextField.text = "TOP"
         setupTextField(topTextField)
-
-        bottomTextField.text = "BOTTOM"
         setupTextField(bottomTextField)
         
+        cameraButton.isEnabled = UIImagePickerController.isSourceTypeAvailable(.camera)
         setButtonStates()
     }
     
@@ -77,6 +73,7 @@ class ImagePickerController: UIViewController, UIImagePickerControllerDelegate, 
     
     func compositeMemedImage() -> UIImage {
         hideNavAndToolbars(true)
+        self.view.endEditing(true)
         UIGraphicsBeginImageContext(self.view.frame.size)
         view.drawHierarchy(in: self.view.frame, afterScreenUpdates: true)
         let compositedImage: UIImage = UIGraphicsGetImageFromCurrentImageContext()!
@@ -86,20 +83,21 @@ class ImagePickerController: UIViewController, UIImagePickerControllerDelegate, 
         return compositedImage
     }
     
-    func save() -> Meme {
-        let meme = Meme(
+    private func generateMeme() -> Meme {
+        return Meme(
             topText: topTextField.text,
             bottomText: bottomTextField.text,
             originalImage: imagePickerView.image!,
             compositedImage: compositeMemedImage()
         )
-        
+    }
+    
+    private func save() {
+        let meme = generateMeme()
         let appDelegate = UIApplication.shared.delegate as! AppDelegate
         debugPrint("adding meme to memes collection [\(appDelegate.memes)]")
         appDelegate.memes.append(meme)
         debugPrint("now we have [\(appDelegate.memes)]")
-        
-        return meme
     }
     
     private func getKeyboardHeight(_ notification: Notification) -> CGFloat {
@@ -138,7 +136,6 @@ class ImagePickerController: UIViewController, UIImagePickerControllerDelegate, 
     }
     
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any]) {
-        debugPrint("picked an image \(info["UIImagePickerControllerOriginalImage"])")
         if let image = info["UIImagePickerControllerOriginalImage"] as? UIImage {
             imagePickerView.image = image
         }
@@ -162,14 +159,14 @@ class ImagePickerController: UIViewController, UIImagePickerControllerDelegate, 
     }
     
     private func completeHandler(activity: UIActivityType?, completed: Bool, returnedItems: [Any]?, activityError: Error?) -> Void {
-        debugPrint("calling to complete handler!! activity \(activity) completed: \(completed) returnedItems \(returnedItems)")
         if (completed) {
             save()
+            self.dismiss(animated: true, completion: nil)
         }
     }
     
     @IBAction func share(_ sender: Any) {
-        let meme = save()
+        let meme = generateMeme()
         let activityViewController = UIActivityViewController(activityItems: [meme.compositedImage!], applicationActivities: nil)
         activityViewController.completionWithItemsHandler = completeHandler
         present(activityViewController, animated: true, completion: nil)
@@ -177,10 +174,6 @@ class ImagePickerController: UIViewController, UIImagePickerControllerDelegate, 
     
     @IBAction func cancel(_ sender: Any) {
         self.dismiss(animated: true, completion: nil)
-//        imagePickerView.image = nil;
-//        topTextField.text = "TOP"
-//        bottomTextField.text = "BOTTOM"
-//        setButtonStates()
     }
 }
 

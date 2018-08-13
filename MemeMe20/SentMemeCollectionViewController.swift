@@ -45,6 +45,7 @@ class SentMemeCollectionViewController: UICollectionViewController {
         let itemsPerRow: CGFloat
         let spacingBetweenCells: CGFloat
         let portraitAspectRatio: CGFloat // assuming screenshots are being created in portrait mode only
+        // this is checked from viewWillAppear and viewWillTransition, the viewWillTransition callback is fired before the transition between layouts, hence (UIDeviceOrientationIsPortrait(UIDevice.current.orientation)) does not give the correct result because the transition has not happened yet
         if (size.height > size.width) { // portrait
             itemsPerRow = 3
             spacingBetweenCells = 3.0
@@ -73,8 +74,7 @@ class SentMemeCollectionViewController: UICollectionViewController {
 //        cell.backgroundColor = self.backgroundColours[(indexPath as NSIndexPath).row % 2]
         let meme = self.memes[(indexPath as NSIndexPath).row]
         
-        cell.imageView?.image = meme.compositedImage
-        cell.imageView?.contentMode = .scaleAspectFit
+        cell.populateCell(meme)
         
         return cell
     }

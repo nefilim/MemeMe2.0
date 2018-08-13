@@ -11,4 +11,9 @@ import UIKit
 class MemeCollectionViewCell: UICollectionViewCell {
     // MARK: Outlets
     @IBOutlet weak var imageView: UIImageView!
+    
+    func populateCell(_ meme: Meme) {
+        imageView.image = meme.compositedImage
+        imageView.contentMode = .scaleAspectFit
+    }
 }
